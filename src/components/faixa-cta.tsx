@@ -1,5 +1,5 @@
 import { Entrada } from "@/components/entrada";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { faixaCta } from "@/lib/conteudo";
 
 /** Faixa de CTA (PRD, Spec 05): faixa estreita que leva ao contato. */
@@ -12,9 +12,9 @@ export function FaixaCta() {
           <p className="mt-3 max-w-xl text-destaque text-creme/75">{faixaCta.texto}</p>
         </Entrada>
         <Entrada atraso={0.08}>
-          <Button nativeButton={false} render={<a href={faixaCta.acao.href} />}>
+          <a href={faixaCta.acao.href} className={buttonVariants()}>
             {faixaCta.acao.rotulo}
-          </Button>
+          </a>
         </Entrada>
       </div>
     </section>

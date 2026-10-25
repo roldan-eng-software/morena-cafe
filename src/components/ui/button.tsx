@@ -1,7 +1,16 @@
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
 
+/*
+  Variante própria do projeto (sem primitiva de terceiros).
+
+  O Button original do preset nova usava `@base-ui/react/button` — que custava
+  ~50 KiB de JS no bundle inicial da landing (auditoria Lighthouse, Spec 08).
+  Aqui o markup é um `<button>` nativo com exatamente as mesmas classes dos
+  variants: mesmo visual, mesmo foco, mesma acessibilidade, sem a runtime.
+  Para link estilizado como botão, use `buttonVariants()` em um <a>.
+*/
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
@@ -44,9 +53,9 @@ function Button({
   variant = "default",
   size = "default",
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: React.ComponentProps<"button"> & VariantProps<typeof buttonVariants>) {
   return (
-    <ButtonPrimitive
+    <button
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}

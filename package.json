@@ -15,7 +15,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@base-ui/react": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.0",
     "gsap": "^3.15.0",

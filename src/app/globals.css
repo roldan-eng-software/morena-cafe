@@ -227,7 +227,6 @@
   justify-content: center;
   gap: 1rem;
   opacity: 0;
-  will-change: transform, opacity;
 }
 
 /* Sem JS a primeira frase já nasce visível; com JS o GSAP assume por inline. */

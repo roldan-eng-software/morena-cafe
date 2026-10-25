@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { frases, indicadorHero } from "@/lib/conteudo";
 
 type Estado = "animado" | "estatico";
@@ -66,9 +66,18 @@ export default function Hero() {
       const d = video?.duration;
       duracao = typeof d === "number" && Number.isFinite(d) && d > 0 ? d : 0;
     };
+    let atrasarBusca: number | undefined;
     if (video) {
       aoCarregarMetadados();
       video.addEventListener("loadedmetadata", aoCarregarMetadados);
+
+      // preload="none": os metadados só são buscados depois da página de pé —
+      // longe da corrida inicial por CSS, fontes e scripts. Antes disso o
+      // scrub ignora o vídeo (duração 0) e mostra o pôster.
+      atrasarBusca = window.setTimeout(() => {
+        video.preload = "metadata";
+        video.load();
+      }, 1500);
     }
 
     // GSAP entra por import() dinâmico: o bundle inicial não paga o custo da
@@ -150,6 +159,7 @@ export default function Hero() {
 
     return () => {
       cancelado = true;
+      if (atrasarBusca !== undefined) window.clearTimeout(atrasarBusca);
       video?.removeEventListener("loadedmetadata", aoCarregarMetadados);
       reverter?.();
     };
@@ -167,7 +177,7 @@ export default function Hero() {
           <video
             ref={videoRef}
             poster="/hero-cafe-poster.jpg"
-            preload="metadata"
+            preload="none"
             muted
             playsInline
           >
@@ -197,9 +207,9 @@ export default function Hero() {
                 <p className="max-w-xl text-destaque text-creme/85">{frase.texto}</p>
                 {frase.acao ? (
                   <div className="mt-2">
-                    <Button nativeButton={false} render={<a href={frase.acao.href} />}>
+                    <a href={frase.acao.href} className={buttonVariants()}>
                       {frase.acao.rotulo}
-                    </Button>
+                    </a>
                   </div>
                 ) : null}
               </div>

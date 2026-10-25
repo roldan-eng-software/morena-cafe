@@ -1,10 +1,17 @@
 import * as React from "react";
-import { Input as InputPrimitive } from "@base-ui/react/input";
 import { cn } from "cn";
 
+/*
+  Input nativo com as classes do preset nova.
+
+  A versão original usava `@base-ui/react/input` só para repassar props — a
+  runtime não adicionava comportamento aqui e pesava no bundle inicial
+  (auditoria Lighthouse, Spec 08). <input> nativo entrega o mesmo resultado,
+  com ref e eventos padrão do HTML.
+*/
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
-    <InputPrimitive
+    <input
       type={type}
       data-slot="input"
       className={cn(
