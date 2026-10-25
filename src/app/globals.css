@@ -1,0 +1,311 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Sistema de design — Morena Café e Gastronomia.
+
+  Valores de cor existem em UM lugar só: o bloco de tokens da marca logo abaixo.
+  Todo o resto do código usa os tokens semânticos (bg-background, text-foreground,
+  bg-primary, border-border, ring, muted-foreground...) — nunca hex solto.
+  Regra R5 do PRD, verificada pelo teste em src/__tests__/tokens.test.ts.
+*/
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Tipografia de marca (fontes injetadas pelo next/font no layout) */
+  --font-sans: var(--font-corpo);
+  --font-heading: var(--font-displayo);
+  --font-mono: var(--font-corpo);
+
+  /* Cores da marca como utilitários (bg-caramelo, text-dourado...).
+     São só referências aos tokens de :root — nenhum valor novo aqui. */
+  --color-cafe-fundo: var(--cafe-fundo);
+  --color-cafe-tinta: var(--cafe-tinta);
+  --color-cafe-medio: var(--cafe-medio);
+  --color-creme: var(--creme);
+  --color-creme-fundo: var(--creme-fundo);
+  --color-creme-card: var(--creme-card);
+  --color-caramelo: var(--caramelo);
+  --color-dourado: var(--dourado);
+  --color-erro: var(--erro);
+
+  /* Escala tipográfica com clamp(): títulos sem estourar de 320px a 1920px */
+  --text-titulo: clamp(2.35rem, 5.4vw, 4.25rem);
+  --text-titulo--line-height: 1.04;
+  --text-titulo-secao: clamp(1.85rem, 3.6vw, 2.75rem);
+  --text-titulo-secao--line-height: 1.12;
+  --text-destaque: clamp(1.05rem, 1.6vw, 1.2rem);
+  --text-destaque--line-height: 1.65;
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* ---------- Marca Morena: única fonte de valores hexadecimais ---------- */
+  --cafe-fundo: #1b110c; /* espresso profundo: fundo principal */
+  --cafe-tinta: #2a1a12; /* superfícies elevadas sobre o fundo */
+  --cafe-medio: #5c3b2a; /* tom médio da marca */
+  --creme: #f4ead9; /* texto sobre escuro */
+  --creme-fundo: #efe3d0; /* fundo da seção clara (cardápio) */
+  --creme-card: #fbf6ec; /* cartões sobre a seção clara */
+  --caramelo: #c8843a; /* ação e destaque */
+  --dourado: #e0a85a; /* hover, detalhes, dourado da crema */
+  --erro: #e08a6f; /* erro legível sobre o fundo escuro */
+  /* ---------------------------------------------------------------------- */
+
+  --background: var(--cafe-fundo);
+  --foreground: var(--creme);
+  --card: var(--cafe-tinta);
+  --card-foreground: var(--creme);
+  --popover: var(--cafe-tinta);
+  --popover-foreground: var(--creme);
+  --primary: var(--caramelo);
+  --primary-foreground: var(--cafe-fundo);
+  --secondary: var(--cafe-medio);
+  --secondary-foreground: var(--creme);
+  --muted: var(--cafe-tinta);
+  --muted-foreground: color-mix(in srgb, var(--creme) 64%, transparent);
+  --accent: var(--cafe-medio);
+  --accent-foreground: var(--creme);
+  --destructive: var(--erro);
+  --border: color-mix(in srgb, var(--caramelo) 28%, transparent);
+  --input: color-mix(in srgb, var(--creme) 26%, transparent);
+  --ring: var(--dourado);
+  --radius: 0.5rem;
+
+  --chart-1: var(--caramelo);
+  --chart-2: var(--dourado);
+  --chart-3: var(--cafe-medio);
+  --chart-4: var(--creme);
+  --chart-5: var(--cafe-tinta);
+  --sidebar: var(--cafe-tinta);
+  --sidebar-foreground: var(--creme);
+  --sidebar-primary: var(--caramelo);
+  --sidebar-primary-foreground: var(--cafe-fundo);
+  --sidebar-accent: var(--cafe-medio);
+  --sidebar-accent-foreground: var(--creme);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+/*
+  Seção clara (cardápio): mesmo componente em outro contexto. Como os utilitários
+  do Tailwind compilam para var(--...), redefinir os tokens neste escopo muda a
+  paleta inteira da seção sem duplicar estilo.
+*/
+.tema-claro {
+  --background: var(--creme-fundo);
+  --foreground: var(--cafe-tinta);
+  --card: var(--creme-card);
+  --card-foreground: var(--cafe-tinta);
+  --popover: var(--creme-card);
+  --popover-foreground: var(--cafe-tinta);
+  --secondary: color-mix(in srgb, var(--caramelo) 18%, var(--creme-fundo));
+  --secondary-foreground: var(--cafe-tinta);
+  --muted: color-mix(in srgb, var(--cafe-medio) 12%, var(--creme-fundo));
+  --muted-foreground: color-mix(in srgb, var(--cafe-medio) 88%, var(--creme-fundo));
+  --accent: color-mix(in srgb, var(--caramelo) 16%, var(--creme-fundo));
+  --accent-foreground: var(--cafe-tinta);
+  --border: color-mix(in srgb, var(--cafe-medio) 34%, transparent);
+  --input: color-mix(in srgb, var(--cafe-medio) 40%, transparent);
+  --ring: var(--cafe-medio);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply scroll-smooth font-sans;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-displayo);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+  ::selection {
+    background: var(--caramelo);
+    color: var(--cafe-fundo);
+  }
+  :focus-visible {
+    outline: 2px solid var(--dourado);
+    outline-offset: 3px;
+  }
+}
+
+/* ---------- Hero: camadas ---------- */
+.hero-fixa {
+  background-color: var(--cafe-fundo);
+}
+
+.hero-camada {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.hero-camada video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Véu: derrete o vídeo no fundo da página e garante contraste do texto.
+   Sem hex: tudo por color-mix sobre os tokens da marca. */
+.hero-camada .veu {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--cafe-fundo) 78%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--cafe-fundo) 92%, transparent),
+      transparent 52%
+    ),
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--cafe-fundo) 55%, transparent),
+      transparent 60%
+    );
+}
+
+/* ---------- Hero: frases ---------- */
+.frase {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Sem JS a primeira frase já nasce visível; com JS o GSAP assume por inline. */
+.frase[data-fase="0"] {
+  opacity: 1;
+}
+
+.frase.ativa {
+  opacity: 1;
+}
+
+/* O atributo hidden precisa de ajuda: a regra do autor .frase{display:flex}
+   vence a folha de estilo do navegador para [hidden]. */
+.frase[hidden] {
+  display: none;
+}
+
+/* ---------- Hero: indicador de rolagem ---------- */
+.traco {
+  width: 1px;
+  height: 2.75rem;
+  background: linear-gradient(to bottom, var(--dourado), transparent);
+  transform-origin: top center;
+  animation: traco 2.4s ease-in-out infinite;
+}
+
+@keyframes traco {
+  0% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  35% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+}
+
+/* ---------- Marcadores de conteúdo provisório (R1) ---------- */
+.marcador {
+  text-decoration: underline dotted;
+  text-decoration-color: color-mix(in srgb, var(--dourado) 75%, transparent);
+  text-underline-offset: 4px;
+  opacity: 0.9;
+}
+
+/* ---------- Movimento reduzido (R3): nada anima em toda a página ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .hero-fixa video {
+    display: none;
+  }
+
+  .hero-fixa {
+    background: url("/hero-cafe-poster.jpg") center / cover no-repeat;
+  }
+
+  .frase:not([data-fase="0"]) {
+    display: none;
+  }
+
+  .frase {
+    opacity: 1;
+    transform: none;
+  }
+}

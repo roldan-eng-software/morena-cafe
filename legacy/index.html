@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morena Café e Gastronomia</title>
+  <meta name="description" content="Morena Café e Gastronomia: um momento para saborear.">
+  <style>
+    :root {
+      --cafe-escuro: #2b1a12;
+      --cafe-medio: #5c3b2a;
+      --creme: #f5ead8;
+      --caramelo: #c8843a;
+      --dourado: #e0a85a;
+
+      --fonte-titulo: Georgia, "Times New Roman", serif;
+      --fonte-texto: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: var(--fonte-texto);
+      background: var(--cafe-escuro);
+      color: var(--creme);
+      line-height: 1.6;
+    }
+
+    img, video { display: block; max-width: 100%; }
+
+    /* ---------- Cabeçalho ---------- */
+    .topo {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem clamp(1.25rem, 4vw, 3rem);
+      background: linear-gradient(to bottom, rgba(43, 26, 18, 0.7), transparent);
+    }
+
+    .logo {
+      font-family: var(--fonte-titulo);
+      font-size: 1.25rem;
+      letter-spacing: 0.05em;
+      color: var(--creme);
+      text-decoration: none;
+    }
+
+    .topo nav a {
+      margin-left: 1.5rem;
+      color: var(--creme);
+      text-decoration: none;
+      font-size: 0.95rem;
+      opacity: 0.85;
+    }
+
+    .topo nav a:hover { color: var(--dourado); opacity: 1; }
+
+    /* ---------- Hero com scroll ---------- */
+    .hero-scroll {
+      position: relative;
+}
+
+    .hero-fixa {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--cafe-escuro);
+}
+
+    .hero-fixa video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-camada {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to right,
+        rgba(43, 26, 18, 0.75) 0%,
+        rgba(43, 26, 18, 0.2) 55%,
+        rgba(43, 26, 18, 0.1) 100%
+      );
+      pointer-events: none;
+    }
+
+    .frase {
+      position: absolute;
+      left: clamp(1.25rem, 6vw, 6rem);
+      top: 50%;
+      transform: translateY(-50%);
+      max-width: 32rem;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .frase.ativa {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+
+    .frase .etiqueta {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: var(--dourado);
+      margin-bottom: 1rem;
+    }
+
+    .frase h1,
+    .frase h2 {
+      font-family: var(--fonte-titulo);
+      font-weight: 400;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      line-height: 1.05;
+      margin: 0 0 1rem;
+      color: var(--creme);
+    }
+
+    .frase p {
+      font-size: clamp(1rem, 1.6vw, 1.15rem);
+      color: rgba(245, 234, 216, 0.85);
+      margin: 0 0 2rem;
+      max-width: 28rem;
+    }
+
+    .botao {
+      display: inline-block;
+      padding: 0.9rem 2rem;
+      border-radius: 999px;
+      background: var(--caramelo);
+      color: var(--cafe-escuro);
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .botao:hover { background: var(--dourado); transform: translateY(-2px); }
+
+    .indicador {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(245, 234, 216, 0.6);
+    }
+
+    /* ---------- Seções seguintes ---------- */
+    .secao {
+      padding: clamp(4rem, 10vw, 8rem) clamp(1.25rem, 6vw, 6rem);
+      background: var(--cafe-medio);
+    }
+
+    .secao.clara {
+      background: var(--creme);
+      color: var(--cafe-escuro);
+    }
+
+    .secao .container {
+      max-width: 60rem;
+      margin: 0 auto;
+    }
+
+    .secao h2 {
+      font-family: var(--fonte-titulo);
+      font-weight: 400;
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin: 0 0 1.5rem;
+    }
+
+    .secao p {
+      font-size: 1.1rem;
+      max-width: 40rem;
+      margin: 0 0 1.5rem;
+    }
+
+    .rodape {
+      padding: 2rem clamp(1.25rem, 6vw, 6rem);
+      background: var(--cafe-escuro);
+      color: rgba(245, 234, 216, 0.6);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+/* ---------- Componentes da página ---------- */
+.grade {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  margin-top: 2.5rem;
+}
+
+.card {
+  background: var(--cafe-escuro);
+  color: var(--creme);
+  border-radius: 1.25rem;
+  padding: 2rem;
+  border: 1px solid rgba(224, 168, 90, 0.2);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--dourado);
+}
+
+.card h3 {
+  font-family: var(--fonte-titulo);
+  font-weight: 400;
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem;
+  color: var(--dourado);
+}
+
+.card .preco {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+  color: var(--caramelo);
+}
+
+.secao.clara .card {
+  background: #fff;
+  color: var(--cafe-escuro);
+}
+
+.secao.clara .card p { color: var(--cafe-medio); }
+
+.depoimento {
+  border-left: 3px solid var(--caramelo);
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.depoimento p { font-style: italic; margin-bottom: 0.75rem; }
+.depoimento cite { font-style: normal; font-size: 0.9rem; opacity: 0.7; }
+
+.contato-grade {
+  display: grid;
+  gap: 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  align-items: start;
+}
+
+.formulario {
+  display: grid;
+  gap: 1rem;
+}
+
+.formulario label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.formulario input,
+.formulario textarea {
+  font: inherit;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(92, 59, 42, 0.3);
+  background: #fff;
+  color: var(--cafe-escuro);
+}
+
+.formulario input:focus,
+.formulario textarea:focus {
+  outline: 2px solid var(--caramelo);
+  outline-offset: 2px;
+}
+
+.formulario textarea { min-height: 8rem; resize: vertical; }
+
+.formulario button {
+  justify-self: start;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.faixa-cta {
+  text-align: center;
+  padding: clamp(4rem, 8vw, 6rem) clamp(1.25rem, 6vw, 6rem);
+  background: var(--caramelo);
+  color: var(--cafe-escuro);
+}
+
+.faixa-cta h2 {
+  font-family: var(--fonte-titulo);
+  font-weight: 400;
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 0 0 1rem;
+}
+
+.faixa-cta p { margin: 0 auto 2rem; max-width: 36rem; }
+
+.faixa-cta .botao {
+  background: var(--cafe-escuro);
+  color: var(--creme);
+}
+
+.faixa-cta .botao:hover { background: var(--cafe-medio); }
+
+    /* ---------- Responsivo ---------- */
+    @media (max-width: 720px) {
+      .topo nav { display: none; }
+      .hero-camada {
+        background: linear-gradient(to top, rgba(43, 26, 18, 0.85) 0%, rgba(43, 26, 18, 0.2) 60%);
+      }
+      .frase {
+        top: auto;
+        bottom: 12vh;
+        transform: none;
+      }
+      .frase.ativa { transform: none; }
+    }
+
+    /* ---------- Movimento reduzido ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .frase { transition: none; }
+      .hero-scroll { height: auto; }
+      .hero-fixa { position: relative; height: 90vh; }
+      .hero-fixa video { display: none; }
+      .hero-fixa {
+        background: url("hero-cafe-poster.jpg") center / cover no-repeat;
+      }
+      .frase:not(:first-child) { display: none; }
+      .frase { opacity: 1; position: relative; top: auto; transform: none; }
+      .hero-fixa { display: flex; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topo">
+    <a href="#inicio" class="logo">Morena Café</a>
+    <nav>
+      <a href="#sobre">Sobre</a>
+      <a href="#cardapio">Cardápio</a>
+      <a href="#contato">Contato</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="inicio" class="hero-scroll">
+      <div class="hero-fixa">
+        <video
+          id="hero-video"
+          poster="hero-cafe-poster.jpg"
+          muted
+          playsinline
+          preload="auto">
+          <source src="hero-cafe.webm" type="video/webm">
+          <source src="hero-cafe.mp4" type="video/mp4">
+        </video>
+
+        <div class="hero-camada"></div>
+
+        <div class="frase ativa" data-fase="0">
+          <span class="etiqueta">Morena Café e Gastronomia</span>
+          <h1>Um momento para saborear</h1>
+          <p>Cada xícara é preparada com calma, para você desacelerar e aproveitar o que está na sua frente.</p>
+          <a href="#cardapio" class="botao">Ver cardápio</a>
+        </div>
+
+        <div class="frase" data-fase="1">
+          <span class="etiqueta">Nossa origem</span>
+          <h2>O grão certo, torrado com cuidado</h2>
+          <p>Escolhemos cafés de produtores parceiros e torramos em pequenos lotes para preservar o aroma e o sabor.</p>
+        </div>
+
+        <div class="frase" data-fase="2">
+          <span class="etiqueta">Na xícara</span>
+          <h2>Um espresso que se sente</h2>
+          <p>Corpo encorpado, crema dourada e um final doce, servido do jeito que o café merece.</p>
+          <a href="#contato" class="botao">Fale com a gente</a>
+        </div>
+
+        <span class="indicador">Role para descobrir</span>
+      </div>
+    </section>
+
+        <section id="sobre" class="secao">
+      <div class="container">
+        <h2>Nossa história</h2>
+        <p>[Escreva aqui como a Morena começou. Uma ou duas frases sobre a origem, o nome e o que motivou a abertura.]</p>
+        <p>Nosso espaço foi pensado para quem gosta de café com calma: mesas confortáveis, luz suave e uma cozinha que acompanha cada xícara.</p>
+      </div>
+    </section>
+
+    <section id="cardapio" class="secao clara">
+      <div class="container">
+        <h2>Cardápio</h2>
+        <p>Preparamos cada bebida com grãos selecionados e torra em pequenos lotes.</p>
+
+        <div class="grade">
+          <article class="card">
+            <h3>Espresso</h3>
+            <p>Corpo encorpado, crema dourada e final doce. A base de tudo.</p>
+            <span class="preco">R$ [00,00]</span>
+          </article>
+
+          <article class="card">
+            <h3>Cappuccino</h3>
+            <p>Espresso com leite vaporizado e uma camada de espuma cremosa.</p>
+            <span class="preco">R$ [00,00]</span>
+          </article>
+
+          <article class="card">
+            <h3>Café coado</h3>
+            <p>Preparo lento, sabor limpo e aromático. Pergunte sobre o grão do dia.</p>
+            <span class="preco">R$ [00,00]</span>
+          </article>
+
+          <article class="card">
+            <h3>[Prato da casa]</h3>
+            <p>[Descreva o prato, os ingredientes e o que ele combina com o café.]</p>
+            <span class="preco">R$ [00,00]</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao">
+      <div class="container">
+        <h2>O que dizem sobre a Morena</h2>
+        <div class="grade">
+          <blockquote class="depoimento">
+            <p>"[Depoimento real de cliente aqui.]"</p>
+            <cite>[Nome do cliente]</cite>
+          </blockquote>
+          <blockquote class="depoimento">
+            <p>"[Outro depoimento real.]"</p>
+            <cite>[Nome do cliente]</cite>
+          </blockquote>
+          <blockquote class="depoimento">
+            <p>"[Terceiro depoimento real.]"</p>
+            <cite>[Nome do cliente]</cite>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <section class="faixa-cta">
+      <h2>Reserve seu momento</h2>
+      <p>Venha tomar um café com a gente. Se preferir, faça um pedido para retirada ou entrega.</p>
+      <a href="#contato" class="botao">Quero ir até a Morena</a>
+    </section>
+
+    <section id="contato" class="secao">
+      <div class="container contato-grade">
+        <div>
+          <h2>Venha nos visitar</h2>
+          <p><strong>Endereço:</strong> [Rua, número, bairro, cidade]</p>
+          <p><strong>Horário:</strong> [Seg a sex, 00h às 00h · Sáb e dom, 00h às 00h]</p>
+          <p><strong>WhatsApp:</strong> [(00) 00000-0000]</p>
+          <p><strong>Instagram:</strong> [@seuperfil]</p>
+        </div>
+
+        <form class="formulario" action="#" method="post">
+          <label>
+            Nome
+            <input type="text" name="nome" required>
+          </label>
+          <label>
+            E-mail
+            <input type="email" name="email" required>
+          </label>
+          <label>
+            Mensagem
+            <textarea name="mensagem" required></textarea>
+          </label>
+          <button class="botao" type="submit">Enviar mensagem</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <span>© 2026 Morena Café e Gastronomia</span>
+    <span>Todos os direitos reservados</span>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<script>
+  (function () {
+    const reduzirMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduzirMovimento) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const video = document.getElementById('hero-video');
+    const [fase0, fase1, fase2] = gsap.utils.toArray('.frase');
+
+    function montarAnimacao() {
+      // Estado inicial: só a primeira frase visível
+      gsap.set([fase1, fase2], { opacity: 0, y: 30 });
+      gsap.set(fase0, { opacity: 1, y: 0 });
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.hero-fixa',
+          start: 'top top',
+          end: '+=300%',       // distância de rolagem da hero
+          pin: true,           // fixa a hero enquanto rola
+          scrub: 1,          // suaviza o movimento
+          anticipatePin: 1
+        }
+      });
+
+      // Vídeo avança do início ao fim durante toda a timeline
+      tl.fromTo(video,
+        { currentTime: 0 },
+        { currentTime: video.duration, ease: 'none', duration: 10 },
+        0
+      );
+
+      // Troca 1: fase 0 sai, fase 1 entra
+      tl.to(fase0, { opacity: 0, y: -30, duration: 0.8 }, 2.2)
+        .fromTo(fase1, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 }, 2.8);
+
+      // Troca 2: fase 1 sai, fase 2 entra
+      tl.to(fase1, { opacity: 0, y: -30, duration: 0.8 }, 5.2)
+        .fromTo(fase2, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 }, 5.8);
+
+      ScrollTrigger.refresh();
+    }
+
+    if (video.readyState >= 1) {
+      montarAnimacao();
+    } else {
+      video.addEventListener('loadedmetadata', montarAnimacao);
+    }
+  })();
+</script>
+</body>
+</html>
