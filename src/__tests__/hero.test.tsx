@@ -3,7 +3,7 @@ import { render, waitFor } from "@testing-library/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Hero from "@/components/hero";
 import { frases } from "@/lib/conteudo";
-import { definirMovimento } from "./apoio";
+import { definirMovimento, intencaoDeRolagem } from "./apoio";
 
 describe("Spec 09 (1) — hero estática com movimento reduzido", () => {
   it("não monta fixação e mostra apenas a primeira frase", () => {
@@ -14,6 +14,11 @@ describe("Spec 09 (1) — hero estática com movimento reduzido", () => {
     expect(secao).toHaveAttribute("data-estado", "estatico");
     expect(container.querySelector(".pin-spacer")).toBeNull();
     expect(ScrollTrigger.getAll()).toHaveLength(0);
+
+    // Nem sob intenção de rolagem o modo reduzido monta GSAP: o efeito nem
+    // registra os gatilhos.
+    intencaoDeRolagem();
+    expect(container.querySelector(".pin-spacer")).toBeNull();
 
     const frasesEl = secao!.querySelectorAll<HTMLElement>(".frase");
     expect(frasesEl).toHaveLength(3);
@@ -35,8 +40,9 @@ describe("Spec 09 (2) — hero animada", () => {
     const secao = container.querySelector("#hero");
     expect(secao).toHaveAttribute("data-estado", "animado");
 
-    // O GSAP chega por import() dinâmico (fora do bundle inicial): a fixação
-    // só existe depois que o chunk é avaliado.
+    // A montagem espera a intenção de rolagem, e o GSAP chega por import()
+    // dinâmico: a fixação só existe depois do disparo + chunk avaliado.
+    intencaoDeRolagem();
     await waitFor(() => expect(container.querySelector(".pin-spacer")).not.toBeNull());
 
     const frasesEl = Array.from(secao!.querySelectorAll<HTMLElement>(".frase"));
@@ -66,9 +72,10 @@ describe("Spec 09 (2) — hero animada", () => {
 });
 
 describe("Spec 09 (3) — montagem e desmontagem limpas", () => {
-  it("não deixa ScrollTrigger ou marca órfãos após desmontar", async () => {
+  it("não deixa ScrollTrigger ou marca órfãs após desmontar", async () => {
     definirMovimento(false);
     const { unmount } = render(<Hero />);
+    intencaoDeRolagem();
     await waitFor(() => expect(ScrollTrigger.getAll().length).toBeGreaterThan(0));
 
     unmount();

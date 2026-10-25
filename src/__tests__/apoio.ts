@@ -3,11 +3,11 @@ import { vi } from "vitest";
 type Ouvinte = () => void;
 
 /**
- * Um único MediaQueryList para toda a suíte: o jsdom não tem matchMedia, o
- * GSAP consulta na importação dos módulos e o Framer Motion guarda a
- * instância. Instâncias novas por chamada deixavam bibliotecas com estado
- * velho — por isso o objeto é singleton, o `matches` é mutado no lugar e os
- * ouvintes são avisados (é como o navegador real se comporta).
+ * Um único MediaQueryList para toda a suíte: o jsdom não tem matchMedia e o
+ * GSAP consulta na importação dos módulos. Instâncias novas por chamada
+ * deixavam bibliotecas com estado velho — por isso o objeto é singleton, o
+ * `matches` é mutado no lugar e os ouvintes são avisados (é como o navegador
+ * real se comporta).
  */
 const ouvintes = new Set<Ouvinte>();
 
@@ -38,6 +38,15 @@ export function definirMovimento(reduzido: boolean): void {
   if (mudou) {
     for (const cb of [...ouvintes]) cb();
   }
+}
+
+/**
+ * Simula a primeira intenção de rolagem: a hero só monta o GSAP (e busca os
+ * metadados do vídeo) quando o visitante demonstra que vai rolar. Os testes
+ * que esperam o pin precisam disparar isto antes do waitFor.
+ */
+export function intencaoDeRolagem(): void {
+  window.dispatchEvent(new Event("wheel"));
 }
 
 // Padrão já na carga do arquivo (antes de qualquer import de componente).

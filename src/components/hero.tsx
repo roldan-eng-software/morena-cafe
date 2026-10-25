@@ -66,113 +66,123 @@ export default function Hero() {
       const d = video?.duration;
       duracao = typeof d === "number" && Number.isFinite(d) && d > 0 ? d : 0;
     };
-    // preload="none": os metadados do vídeo são buscados só quando o
-    // visitante demonstra intenção de rolagem — a mídia sai da corrida
-    // inicial por HTML, CSS, fontes e scripts (e de toda medição de
-    // performance da página). Antes disso o scrub ignora o vídeo
-    // (duração 0) e o pôster cumpre o papel visual.
+    // preload="none": os metadados do vídeo são buscados junto com a montagem
+    // do GSAP — os dois acontecem sob intenção de rolagem do visitante, uma
+    // única vez. Sem interação (como na medição de performance) nada do mais
+    // pesado existe na janela crítica: a hero fica no pôster e na primeira
+    // frase (CSS puro). Antes disso o scrub ignora o vídeo (duração 0).
     let buscando = false;
-    const buscarMetadados = () => {
-      if (buscando || !video) return;
-      buscando = true;
-      video.preload = "metadata";
-      video.load();
-      desligarGatilhos();
+    let montado = false;
+    let cancelado = false;
+    let reverter: (() => void) | undefined;
+
+    // GSAP entra por import() dinâmico E sob intenção de rolagem: o bundle
+    // inicial não paga a biblioteca (~110KB) e, enquanto ninguém rolou, a main
+    // thread não paga o ticker, os timers e o refresh do pin — foi o que
+    // segurou LCP/Speed Index na auditoria de performance (Spec 08). Quem rola
+    // cedo recebe o pin alguns ms depois, ainda dentro da própria hero.
+    const montarHero = () => {
+      if (montado) return;
+      montado = true;
+
+      void (async () => {
+        const { default: gsap } = await import("gsap");
+        const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+        if (cancelado) return; // desmontou antes do chunk chegar: não monta nada
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        const ctx = gsap.context(() => {
+          const [f0, f1, f2] = gsap.utils.toArray<HTMLElement>(".frase", raizEl);
+
+          const progresso = { t: 0 };
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: raizEl,
+              start: "top top",
+              end: "+=300%",
+              pin: alvo,
+              scrub: 1,
+              anticipatePin: 1,
+            },
+          });
+
+          // Vídeo: 0 → último frame ao longo da timeline inteira (duração 10).
+          tl.to(
+            progresso,
+            {
+              t: DURACAO_LINHA,
+              duration: DURACAO_LINHA,
+              ease: "none",
+              onUpdate: () => {
+                if (!video || duracao === 0) return;
+                const alvo = (progresso.t / DURACAO_LINHA) * duracao;
+                if (Number.isFinite(alvo)) video.currentTime = alvo;
+              },
+            },
+            0,
+          );
+
+          // Frases: trocas fixas, sempre uma visível por vez.
+          if (f0 && f1) {
+            tl.to(
+              f0,
+              { opacity: 0, y: -28, duration: TRANSICAO, ease: "none" },
+              TROCA_UM,
+            );
+            tl.fromTo(
+              f1,
+              { opacity: 0, y: 28 },
+              { opacity: 1, y: 0, duration: TRANSICAO, ease: "none" },
+              TROCA_UM,
+            );
+          }
+          if (f1 && f2) {
+            tl.to(
+              f1,
+              { opacity: 0, y: -28, duration: TRANSICAO, ease: "none" },
+              TROCA_DOIS,
+            );
+            tl.fromTo(
+              f2,
+              { opacity: 0, y: 28 },
+              { opacity: 1, y: 0, duration: TRANSICAO, ease: "none" },
+              TROCA_DOIS,
+            );
+          }
+        }, raizEl);
+
+        reverter = () => ctx.revert();
+      })();
     };
-    // Só rolagem de verdade conta: um reajuste de posição que o próprio
-    // ScrollTrigger possa causar na montagem não deve disparar a busca.
-    const aoScroll = () => {
-      if (window.scrollY > 4) buscarMetadados();
-    };
+
+    // Gatilho único: a primeira intenção de rolagem dispara a fase pesada
+    // (chunk do GSAP + metadados do vídeo) e desliga os próprios ouvintes.
     const gatilhos = ["wheel", "touchmove", "keydown", "pointerdown"] as const;
     const desligarGatilhos = () => {
-      for (const g of gatilhos) window.removeEventListener(g, buscarMetadados);
+      for (const g of gatilhos) window.removeEventListener(g, aoIntencao);
       window.removeEventListener("scroll", aoScroll);
     };
-    for (const g of gatilhos)
-      window.addEventListener(g, buscarMetadados, { passive: true });
+    const aoIntencao = () => {
+      desligarGatilhos(); // um disparo só: tudo que é caro acontece uma vez
+      montarHero();
+      if (video && !buscando) {
+        buscando = true;
+        video.preload = "metadata";
+        video.load();
+      }
+    };
+    // Só rolagem de verdade conta: um reajuste de posição que o próprio
+    // ScrollTrigger possa causar na montagem não deve disparar de novo.
+    const aoScroll = () => {
+      if (window.scrollY > 4) aoIntencao();
+    };
+    for (const g of gatilhos) window.addEventListener(g, aoIntencao, { passive: true });
     window.addEventListener("scroll", aoScroll, { passive: true });
     if (video) {
       aoCarregarMetadados();
       video.addEventListener("loadedmetadata", aoCarregarMetadados);
     }
-
-    // GSAP entra por import() dinâmico: o bundle inicial não paga o custo da
-    // biblioteca (~110KB) — o chunk só é buscado depois da primeira pintura,
-    // quando o visitante ainda está na hero. A rolagem só começa a ser
-    // manipulada de qualquer forma depois que a página está de pé.
-    let cancelado = false;
-    let reverter: (() => void) | undefined;
-
-    void (async () => {
-      const { default: gsap } = await import("gsap");
-      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
-      if (cancelado) return; // desmontou antes do chunk chegar: não monta nada
-
-      gsap.registerPlugin(ScrollTrigger);
-
-      const ctx = gsap.context(() => {
-        const [f0, f1, f2] = gsap.utils.toArray<HTMLElement>(".frase", raizEl);
-
-        const progresso = { t: 0 };
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: raizEl,
-            start: "top top",
-            end: "+=300%",
-            pin: alvo,
-            scrub: 1,
-            anticipatePin: 1,
-          },
-        });
-
-        // Vídeo: 0 → último frame ao longo da timeline inteira (duração 10).
-        tl.to(
-          progresso,
-          {
-            t: DURACAO_LINHA,
-            duration: DURACAO_LINHA,
-            ease: "none",
-            onUpdate: () => {
-              if (!video || duracao === 0) return;
-              const alvo = (progresso.t / DURACAO_LINHA) * duracao;
-              if (Number.isFinite(alvo)) video.currentTime = alvo;
-            },
-          },
-          0,
-        );
-
-        // Frases: trocas fixas, sempre uma visível por vez.
-        if (f0 && f1) {
-          tl.to(
-            f0,
-            { opacity: 0, y: -28, duration: TRANSICAO, ease: "none" },
-            TROCA_UM,
-          );
-          tl.fromTo(
-            f1,
-            { opacity: 0, y: 28 },
-            { opacity: 1, y: 0, duration: TRANSICAO, ease: "none" },
-            TROCA_UM,
-          );
-        }
-        if (f1 && f2) {
-          tl.to(
-            f1,
-            { opacity: 0, y: -28, duration: TRANSICAO, ease: "none" },
-            TROCA_DOIS,
-          );
-          tl.fromTo(
-            f2,
-            { opacity: 0, y: 28 },
-            { opacity: 1, y: 0, duration: TRANSICAO, ease: "none" },
-            TROCA_DOIS,
-          );
-        }
-      }, raizEl);
-
-      reverter = () => ctx.revert();
-    })();
 
     return () => {
       cancelado = true;

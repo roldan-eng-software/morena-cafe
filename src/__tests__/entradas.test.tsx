@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import Pagina from "@/app/page";
-import { definirMovimento } from "./apoio";
+import { definirMovimento, intencaoDeRolagem } from "./apoio";
 
 // Arquivo separado de propósito: o Vitest isola os módulos por arquivo, e a
 // hero guarda a preferência de movimento no estado externo do matchMedia —
@@ -14,8 +14,9 @@ describe("Spec 09 (4)/(7) — página com movimento normal", () => {
     expect(container.querySelectorAll(".entrada-el").length).toBeGreaterThan(0);
     expect(container.querySelector("#hero")).toHaveAttribute("data-estado", "animado");
 
-    // A hero monta o GSAP via import() dinâmico: a fixação aparece depois
-    // que o chunk é avaliado, não na primeira pintura.
+    // A hero monta o GSAP sob intenção de rolagem (import() dinâmico): a
+    // fixação só aparece depois do disparo + chunk avaliado.
+    intencaoDeRolagem();
     await waitFor(() => expect(container.querySelector(".pin-spacer")).not.toBeNull());
   });
 });
