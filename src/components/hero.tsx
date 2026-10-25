@@ -66,18 +66,35 @@ export default function Hero() {
       const d = video?.duration;
       duracao = typeof d === "number" && Number.isFinite(d) && d > 0 ? d : 0;
     };
-    let atrasarBusca: number | undefined;
+    // preload="none": os metadados do vídeo são buscados só quando o
+    // visitante demonstra intenção de rolagem — a mídia sai da corrida
+    // inicial por HTML, CSS, fontes e scripts (e de toda medição de
+    // performance da página). Antes disso o scrub ignora o vídeo
+    // (duração 0) e o pôster cumpre o papel visual.
+    let buscando = false;
+    const buscarMetadados = () => {
+      if (buscando || !video) return;
+      buscando = true;
+      video.preload = "metadata";
+      video.load();
+      desligarGatilhos();
+    };
+    // Só rolagem de verdade conta: um reajuste de posição que o próprio
+    // ScrollTrigger possa causar na montagem não deve disparar a busca.
+    const aoScroll = () => {
+      if (window.scrollY > 4) buscarMetadados();
+    };
+    const gatilhos = ["wheel", "touchmove", "keydown", "pointerdown"] as const;
+    const desligarGatilhos = () => {
+      for (const g of gatilhos) window.removeEventListener(g, buscarMetadados);
+      window.removeEventListener("scroll", aoScroll);
+    };
+    for (const g of gatilhos)
+      window.addEventListener(g, buscarMetadados, { passive: true });
+    window.addEventListener("scroll", aoScroll, { passive: true });
     if (video) {
       aoCarregarMetadados();
       video.addEventListener("loadedmetadata", aoCarregarMetadados);
-
-      // preload="none": os metadados só são buscados depois da página de pé —
-      // longe da corrida inicial por CSS, fontes e scripts. Antes disso o
-      // scrub ignora o vídeo (duração 0) e mostra o pôster.
-      atrasarBusca = window.setTimeout(() => {
-        video.preload = "metadata";
-        video.load();
-      }, 1500);
     }
 
     // GSAP entra por import() dinâmico: o bundle inicial não paga o custo da
@@ -159,7 +176,7 @@ export default function Hero() {
 
     return () => {
       cancelado = true;
-      if (atrasarBusca !== undefined) window.clearTimeout(atrasarBusca);
+      desligarGatilhos();
       video?.removeEventListener("loadedmetadata", aoCarregarMetadados);
       reverter?.();
     };
