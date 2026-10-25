@@ -31,10 +31,12 @@ Produção: <https://morena-cafe.vercel.app> · Repo: `roldan-eng-software/moren
 2. **Não regenerar, renomear nem editar os assets de vídeo** —
    `public/hero-cafe.webm`, `public/hero-cafe.mp4`, `public/hero-cafe-poster.jpg`
    são aprovados. Nomes fixos.
-3. **A hero é GSAP; o resto é Framer Motion.** GSAP/ScrollTrigger só em
+3. **A hero é GSAP; as entradas são CSS puro.** GSAP/ScrollTrigger só em
    `src/components/hero.tsx`, sempre com `gsap.context()` + `ctx.revert()` no
-   cleanup. Trocar a lib da hero ou mexer na mecânica (pin `+=300%`, scrub,
-   trocas em 2.2/5.2) exige rodar a suíte e revisar os testes da hero.
+   cleanup — e carregados por `import()` dinâmico **sob a primeira intenção de
+   rolagem** (o mesmo gatilho busca os metadados do vídeo). Trocar a lib da
+   hero ou mexer na mecânica (pin `+=300%`, scrub, trocas em 2.2/5.2) exige
+   rodar a suíte e revisar os testes da hero.
 4. **Cores só em tokens.** Hex vive exclusivamente no bloco `:root` de
    `src/app/globals.css`. Fora dali é `bg-background`, `text-foreground`,
    utilitários da marca (`text-dourado`…) ou `color-mix()`. O teste
@@ -45,8 +47,8 @@ Produção: <https://morena-cafe.vercel.app> · Repo: `roldan-eng-software/moren
 6. **`lang="pt-BR"` e textos acentuados.** Copy funcional (frases da hero,
    títulos de seção) não se reescreve sem pedido explícito.
 7. **Movimento reduzido funciona em toda a página** — a hero nem monta o GSAP
-   nesse modo. Se você adicionar animação, respeite `useReducedMotion`/CSS
-   `prefers-reduced-motion` e cubra com teste.
+   nesse modo. Se você adicionar animação, respeite a preferência (`matchMedia`
+   / CSS `prefers-reduced-motion`) e cubra com teste.
 
 ## Comandos
 
@@ -60,8 +62,9 @@ npm run build        # build de produção
 ```
 
 Ambiente de teste: `vitest.setup.ts` + `src/__tests__/apoio.ts` (singleton de
-`matchMedia` — jsdom não tem; instâncias novas quebram GSAP/Framer). Testes que
-dependem de estado de módulo do Framer ficam em arquivo próprio
+`matchMedia` — jsdom não tem; instâncias novas deixam a suíte com estado velho)
+e `intencaoDeRolagem()`, que dispara o gatilho único que monta o GSAP da hero.
+Testes que dependem de estado por módulo ficam em arquivo próprio
 (`entradas.test.tsx`).
 
 ## Onde mexer

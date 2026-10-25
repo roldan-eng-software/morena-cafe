@@ -4,18 +4,22 @@
 
 ## Stack (versões do `package.json`)
 
-| Camada    | Tecnologia                                         |
-| --------- | -------------------------------------------------- |
-| Framework | Next.js 16.4.3 (App Router, Turbopack, RSC)        |
-| Linguagem | TypeScript 5 (modo estrito, `strict: true`)        |
-| UI        | React 19.3 + Tailwind CSS v4 + shadcn/ui (base-ui) |
-| Animação  | GSAP 3 + ScrollTrigger (só a hero)                 |
-|           | Framer Motion (demais seções)                      |
-| Testes    | Vitest 5 + Testing Library (jsdom)                 |
-| Qualidade | ESLint 9 flat (`next/core-web-vitals`) + Prettier  |
-| Ganchos   | Husky + lint-staged                                |
-| Fontes    | Fraunces (display) + Karla (corpo), `next/font`    |
-| Deploy    | Vercel com integração Git                          |
+| Camada    | Tecnologia                                        |
+| --------- | ------------------------------------------------- |
+| Framework | Next.js 16.4.3 (App Router, Turbopack, RSC)       |
+| Linguagem | TypeScript 5 (modo estrito, `strict: true`)       |
+| UI        | React 19.3 + Tailwind CSS v4 + shadcn/ui          |
+|           | (variants com cva; botão/input HTML nativo,       |
+|           | sem base-ui — saiu na Spec 08)                    |
+| Animação  | GSAP 3 + ScrollTrigger (só a hero, `import()`     |
+|           | dinâmico sob a primeira intenção de rolagem)      |
+|           | Entradas das seções: IntersectionObserver +       |
+|           | transição CSS (sem lib de animação no bundle)     |
+| Testes    | Vitest 5 + Testing Library (jsdom)                |
+| Qualidade | ESLint 9 flat (`next/core-web-vitals`) + Prettier |
+| Ganchos   | Husky + lint-staged                               |
+| Fontes    | Fraunces (display) + Karla (corpo), `next/font`   |
+| Deploy    | Vercel com integração Git                         |
 
 ## Estrutura
 
@@ -28,7 +32,7 @@ src/
 ├── components/
 │   ├── topo.tsx          # cabeçalho fixo (âncoras, sem JS)
 │   ├── hero.tsx          # GSAP/ScrollTrigger — o ÚNICO arquivo com GSAP
-│   ├── entrada.tsx       # wrapper de entrada (Framer Motion)
+│   ├── entrada.tsx       # wrapper de entrada (IntersectionObserver + CSS)
 │   ├── sobre/cardapio/depoimentos/faixa-cta/contato/rodape.tsx
 │   ├── formulario.tsx    # validação honesta (sem backend)
 │   ├── marcador.tsx      # realça os [...] provisórios
@@ -42,7 +46,7 @@ formulário). Conteúdo nunca fica em componente — sempre em `lib/conteudo.ts`
 
 ## Decisões e trade-offs
 
-### GSAP só na hero, Framer Motion no resto
+### GSAP só na hero, entradas em CSS puro no resto
 
 A hero precisa de **pin + scrub**: a rolagem fixa a seção por 300% de altura e
 controla o `currentTime` do vídeo com suavização. Essa é a mecânica que já
@@ -51,9 +55,19 @@ o risco mais alto do refactor. GSAP/ScrollTrigger ficam **encapsulados em
 `hero.tsx`**, com `gsap.context()` + `ctx.revert()` no cleanup: nenhum
 ScrollTrigger sobrevive à desmontagem (garantido pelo teste de desmontagem).
 
-O resto da página precisa de menos: entrada única quando a seção chega à tela
-(`whileInView`, `once: true`). Para isso, Framer Motion é mais idiomático em
-React — e ele **não** é importado pela hero.
+Dois recortes de orçamento (Spec 08) mantêm esse peso fora do caminho crítico:
+o GSAP entra por `import()` dinâmico **sob a primeira intenção de rolagem**
+(wheel/toque/tecla/scroll) — o mesmo gatilho que busca os metadados do vídeo —
+então, sem interação, a main thread não paga o chunk, o ticker, os timers nem o
+refresh do pin. Foi o que derrubou o LCP medido de ~3,4s para 1,8s.
+
+O resto da página precisa de menos: entrada única quando a seção chega à tela,
+uma vez. A stack inicial previa o Framer Motion para isso; a auditoria mostrou
+dezenas de KB de JS a mais no caminho crítico para um caso de uso de dezenas de
+linhas — hoje é IntersectionObserver + transição CSS (`entrada.tsx`), com o
+mesmo comportamento pedido (entrada curta única, sem repetição, nada anima com
+movimento reduzido) e o mesmo teste cobrindo. O `ui/button.tsx` e o `ui/input.tsx`
+também deixaram o base-ui: markup nativo com as mesmas variants do shadcn.
 
 Detalhe de implementation: o elemento fixado é um interno (`.hero-alvo`), nunca
 o `<section>` que o React é dono. Assim o `pin` não reorganiza o DOM sob os
@@ -80,10 +94,11 @@ paleta trocada sem duplicar CSS.
 - **Hero:** `useSyncExternalStore` sobre `matchMedia` (valor do servidor é
   `false` e corrigido após a hidratação sem mismatch). Com redução ativa o
   GSAP **não é montado** — sem pin, sem scrub, só o pôster e a frase 1.
-- **Demais seções:** `Entrada` devolve `<div>` puro quando `useReducedMotion()`
-  é true; além disso o CSS global zera transições/animações.
-- Sem JavaScript: `<noscript>` devolve a visibilidade que o estilo inline do
-  Framer Motion esconderia, e a frase 1 nasce visível por CSS.
+- **Demais seções:** `Entrada` devolve `<div>` puro quando a preferência é
+  reduzida (sem classe de animação, sem observador); além disso o CSS global
+  zera transições/animações.
+- Sem JavaScript: `<noscript>` devolve a visibilidade que o estado inicial
+  (`data-visivel="false"`) esconderia, e a frase 1 nasce visível por CSS.
 
 ### Formulário sem backend
 
@@ -95,8 +110,9 @@ primeiro inválido, nada é apagado) e, com tudo válido, um retorno que diz
 ### Vídeo, não canvas
 
 A hero usa os três assets aprovados (`hero-cafe.webm` + `.mp4` + pôster) com
-`preload="metadata"`: o pôster pinta na primeira dobra e o vídeo só precisa
-estar pronto quando a rolagem começar. Frames em `<canvas>` ficaram fora do
+`preload="none"`: o pôster pinta na primeira dobra e os metadados do vídeo só
+são buscados sob intenção de rolagem (o scrub ignora o vídeo enquanto a
+duração é desconhecida). Frames em `<canvas>` ficaram fora do
 escopo — só entra se a performance real exigir. Nenhuma biblioteca vem de CDN:
 tudo é dependência do projeto, versionada.
 
@@ -119,15 +135,16 @@ Qualquer falha **aborta o commit**. `--no-verify` é o escape hatch do git
 |                       | pin montado, desmontagem sem órfãos             |
 | `secoes.test.tsx`     | sete partes + âncoras, marcadores intactos,     |
 |                       | um único h1, zero CDN externo                   |
-| `entradas.test.tsx`   | modo normal usa Framer Motion (arquivo isolado: |
-|                       | o Framer guarda estado no módulo)               |
+| `entradas.test.tsx`   | modo normal monta a hero animada sob intenção   |
+|                       | de rolagem (arquivo isolado: estado por módulo) |
 | `formulario.test.tsx` | vazio/inválido, foco, texto preservado, retorno |
 |                       | honesto, envio por Enter                        |
 | `tokens.test.tsx`     | nove tokens existem, zero hex fora do bloco     |
 
 Truque de ambiente: o jsdom não tem `matchMedia`/`IntersectionObserver` —
 `src/__tests__/apoio.ts` expõe um `MediaQueryList` **singleton** (instâncias
-novas por chamada deixavam GSAP/Framer com estado velho).
+novas por chamada deixavam a suíte com estado velho) e o helper
+`intencaoDeRolagem()`, que dispara o gatilho único da hero (vídeo + GSAP).
 
 ## Deploy (regra R7)
 

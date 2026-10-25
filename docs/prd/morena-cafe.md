@@ -1,7 +1,7 @@
 # PRD — Morena Café e Gastronomia (refatoração completa)
 
 > Tipo: PRD inicial · Data: 2026-10-25
-> **Status:** Aguardando implementação
+> **Status:** Implementada
 >
 > <!-- Valores possíveis: "Aguardando implementação" | "Implementada". Atualize para "Implementada" quando todas as specs estiverem concluídas. -->
 
@@ -173,7 +173,9 @@ produção na Vercel a cada push na `main` — tudo documentado em `README.md`, 
 - **Framework:** Next.js (App Router) com React e TypeScript em modo estrito.
 - **Estilo:** Tailwind CSS v4 + shadcn/ui como base de componentes.
 - **Animação:** GSAP + ScrollTrigger **exclusivamente** para a hero (rolagem +
-  scrub do vídeo); Framer Motion (Motion) para as animações das demais seções.
+  scrub do vídeo), carregado por `import()` dinâmico sob a primeira intenção de
+  rolagem; as entradas das demais seções são IntersectionObserver + transição CSS,
+  sem lib de animação no bundle (o Framer Motion saiu na otimização da Spec 08).
 - **Qualidade:** ESLint (config oficial Next.js + TypeScript), Prettier, Vitest +
   Testing Library.
 - **Ganchos:** Husky + lint-staged no pré-commit.
@@ -190,8 +192,11 @@ captura erros antes do deploy e componentes acessíveis prontos sem construir do
 
 GSAP permanece na hero porque é a ferramenta que já provou o efeito (scrub de vídeo
 sincronizado à rolagem com suavização) — trocar a mecânica que funciona é o risco mais
-alto do refactor. Framer Motion cobre o resto da página, onde o que se precisa é
-entrada, hover e listas — casos simples, para os quais ele é mais idiomático em React.
+alto do refactor —, e ele entra por `import()` dinâmico na primeira intenção de rolagem
+para não pesar na janela crítica (Spec 08). O resto da página precisava apenas de
+entrada única, hover e listas: casos simples que IntersectionObserver + transição CSS
+resolvem em dezenas de linhas — a lib de animação que a stack inicial previa (Framer
+Motion) saiu do bundle na otimização de performance, sem mudar o comportamento pedido.
 
 Vitest + Testing Library porque o comportamento crítico (reduced motion, montagem da
 hero, ordem das frases) é testável em jsdom sem navegador. A Vercel é a hospedagem
@@ -377,7 +382,7 @@ Specs:
   renomeados: vídeo WebM, vídeo MP4 e pôster JPG, nomes fixos. Hoje o efeito é feito com
   GSAP + ScrollTrigger (fixação da seção + scrub do `currentTime`), e essa mecânica é a
   que funciona — a decisão confirmada é **manter GSAP/ScrollTrigger nesta spec**,
-  isolado do restante da página, com Framer Motion fora daqui.
+  isolado do restante da página: nenhuma outra seção carrega GSAP.
 - **Atores:** Visitante (rola), visitante com movimento reduzido, navegador.
 - **Descrição do comportamento:** Ao rolar sobre a hero, o vídeo avança do primeiro ao
   último frame em proporção direta à rolagem, com suavização (o progresso não "pula"
@@ -447,13 +452,15 @@ Specs:
 
 - **Fase:** Fase 2
 - **Objetivo (o quê):** Adicionar animação discreta às seções abaixo da hero — entradas
-  quando a seção chega à tela, estados de hover em cards e botões — usando Framer
-  Motion, sem competir com a hero.
+  quando a seção chega à tela, estados de hover em cards e botões — sem competir com a
+  hero.
 - **Intenção (por quê):** A página precisa parecer viva depois do espetáculo da hero,
   mas motion espalhado é o clichê que a direção de design rejeita: uma entrada única e
   bem resolvida por bloco, e motion que responde à ação do usuário (hover, clique).
-  Também é aqui que a `framer-motion-animator` entra, cumprindo a decisão de escopo da
-  animação.
+  A decisão de escopo é esta: animação de seção é entrada única, nunca scroll-sync.
+  (A stack inicial previa Framer Motion para isto; a Spec 08 trocou por
+  IntersectionObserver + transição CSS por orçamento de performance, sem mudar o
+  comportamento.)
 - **Contexto:** Spec 03 já cobre a hero com GSAP — esta spec é explicitamente o resto
   da página. Nenhuma animação pode rodar quando movimento reduzido está ativo.
 - **Atores:** Visitante.
@@ -718,6 +725,15 @@ Specs:
     visível e legível.
 - **Definição de pronto:** Auditoria registrada com números ≥ 90 e ausência de CDN
   verificada.
+  > **Implementada (2026-10-25).** Duas rodadas de Lighthouse no deploy de produção
+  > (`0655f11`): **99/100/100/100** e **91/100/100/100** (performance / acessibilidade
+  > / boas práticas / SEO) — ≥ 90 nas quatro, média 95. Para fechar o orçamento o
+  > caminho crítico perdeu o Framer Motion e o base-ui (entradas viraram
+  > IntersectionObserver + transição CSS; botão e input, HTML nativo com as mesmas
+  > variants), o GSAP passou a entrar por `import()` dinâmico **sob a primeira
+  > intenção de rolagem** e o vídeo ficou com `preload="none"` (metadados sob a mesma
+  > intenção). Resultado no ar: LCP de ~3,4s para 1,8s, TBT de 2,7s para 90–250ms,
+  > Speed Index de 9,0s para 1,3–1,7s.
 - **Dependências:** Specs 03 (vídeo), 04 (motion), 05/06 (conteúdo).
 - **Fora do escopo desta spec:** Estratégia de frames em canvas; lazy-load de vídeo por
   tipo de conexão (só entra se a auditoria exigir); otimização de imagem além dos
@@ -911,7 +927,8 @@ Specs:
   **pendências de conteúdo** (o que precisa ser preenchido pelo dono, com os marcadores
   correspondentes). `docs/project-overview.md`: o produto em linguagem simples, sem
   jargão. `docs/architecture.md`: stack e versões, separação de responsabilidades entre
-  GSAP (hero) e Framer Motion (demais seções) com a trade-off escrita, tokens de design,
+  GSAP (hero) e as entradas em CSS puro das demais seções — com a trade-off escrita,
+  inclusive por que a lib de animação saiu do bundle —, tokens de design,
   decisão de testes, pipeline de qualidade e fluxo de deploy — cada decisão registrada
   com o **porquê**, não só o quê. `AGENTS.md` reescrito: objetivo do produto, marca e
   regras de conteúdo que permanecem válidas (não inventar dados, pt-BR, não regenerar
@@ -943,7 +960,8 @@ Specs:
   - Dado que o repositório é clonado Quando sigo o README Então consigo instalar,
     rodar, testar e buildar sem descoberta extra.
   - Dado que `docs/architecture.md` é lido Quando chego na decisão de animação Then a
-    trade-off GSAP×Framer Motion está escrita com o motivo.
+    trade-off (GSAP na hero × entradas em CSS puro, e por que a lib de animação saiu)
+    está escrita com o motivo.
   - Dado que `AGENTS.md` é lido Quando busco as regras de conteúdo Then "não inventar
     dados" e "não regenerar vídeos" estão lá, e nenhuma regra de HTML/CSS inline antigo
     permanece.

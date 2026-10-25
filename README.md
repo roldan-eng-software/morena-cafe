@@ -85,7 +85,7 @@ src/
 │   └── globals.css           # tokens de design (única fonte de cores)
 ├── components/
 │   ├── hero.tsx              # GSAP/ScrollTrigger — o único arquivo com GSAP
-│   ├── entrada.tsx           # entradas das seções (Framer Motion)
+│   ├── entrada.tsx           # entradas das seções (IntersectionObserver + CSS)
 │   ├── formulario.tsx        # formulário validado (sem envio real)
 │   ├── topo/sobre/cardapio/… # seções e cabeçalho
 │   └── ui/                   # componentes shadcn (button, card, input…)
@@ -113,8 +113,8 @@ precisa mudar:
 ## Decisões e documentação
 
 - [Visão do produto](docs/project-overview.md) — o que a página oferece
-- [Arquitetura](docs/architecture.md) — por que GSAP na hero e Framer Motion
-  no resto, tokens de cor, testes e deploy
+- [Arquitetura](docs/architecture.md) — por que GSAP na hero (sob intenção de
+  rolagem) e entradas em CSS puro no resto, tokens de cor, testes e deploy
 - [PRD](docs/prd/morena-cafe.md) — requisitos completos e critérios de aceite
 - [`AGENTS.md`](AGENTS.md) — regras do projeto para agentes de IA
 
