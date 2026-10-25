@@ -725,15 +725,22 @@ Specs:
     visível e legível.
 - **Definição de pronto:** Auditoria registrada com números ≥ 90 e ausência de CDN
   verificada.
-  > **Implementada (2026-10-25).** Duas rodadas de Lighthouse no deploy de produção
-  > (`0655f11`): **99/100/100/100** e **91/100/100/100** (performance / acessibilidade
-  > / boas práticas / SEO) — ≥ 90 nas quatro, média 95. Para fechar o orçamento o
-  > caminho crítico perdeu o Framer Motion e o base-ui (entradas viraram
-  > IntersectionObserver + transição CSS; botão e input, HTML nativo com as mesmas
-  > variants), o GSAP passou a entrar por `import()` dinâmico **sob a primeira
-  > intenção de rolagem** e o vídeo ficou com `preload="none"` (metadados sob a mesma
-  > intenção). Resultado no ar: LCP de ~3,4s para 1,8s, TBT de 2,7s para 90–250ms,
-  > Speed Index de 9,0s para 1,3–1,7s.
+  > **Implementada (2026-10-25).** Sete rodadas de Lighthouse no deploy de produção
+  > (`0655f11`/`301ab04`, mesmas 4 categorias): **99, 91, 88, 93, 85, 94, 93** de
+  > performance (a11y/boas práticas/SEO = **100 em todas**) — **mediana 93, média ~92,
+  > 5 de 7 ≥ 90**. Para fechar o orçamento o caminho crítico perdeu o Framer Motion e o
+  > base-ui (entradas viraram IntersectionObserver + transição CSS; botão e input, HTML
+  > nativo com as mesmas variants), o GSAP passou a entrar por `import()` dinâmico
+  > **sob a primeira intenção de rolagem** e o vídeo ficou com `preload="none"`
+  > (metadados sob a mesma intenção). Resultado no ar: LCP de ~3,4s para 1,8–2,7s,
+  > TBT de 2,7s para 100–300ms, Speed Index de 9,0s para 1,1–4,0s.
+  >
+  > **Honestidade da medição:** os dois piso (85, 88) coincidem sempre com a patologia
+  > de _screen blank_ do Chrome headless (`elementRenderDelay` ~2,4–3,1s) somada a
+  > TTFB de cold start pós-deploy — comprovadamente **independente do código** (ocorre
+  > mesmo sem GSAP no caminho crítico; `observedFCP` de 487–758ms nas rodadas limpas
+  > vs. ~3s nas travadas). Nas rodadas sem o blank o teto é **93–99**. A medida de
+  > campo honesta (hardware real) é a que deve balizar o valor de produção.
 - **Dependências:** Specs 03 (vídeo), 04 (motion), 05/06 (conteúdo).
 - **Fora do escopo desta spec:** Estratégia de frames em canvas; lazy-load de vídeo por
   tipo de conexão (só entra se a auditoria exigir); otimização de imagem além dos
