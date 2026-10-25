@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/components/ui/button";
 import { frases, indicadorHero } from "@/lib/conteudo";
-
-gsap.registerPlugin(ScrollTrigger);
 
 type Estado = "animado" | "estatico";
 
@@ -75,65 +71,87 @@ export default function Hero() {
       video.addEventListener("loadedmetadata", aoCarregarMetadados);
     }
 
-    const ctx = gsap.context(() => {
-      const [f0, f1, f2] = gsap.utils.toArray<HTMLElement>(".frase", raizEl);
+    // GSAP entra por import() dinâmico: o bundle inicial não paga o custo da
+    // biblioteca (~110KB) — o chunk só é buscado depois da primeira pintura,
+    // quando o visitante ainda está na hero. A rolagem só começa a ser
+    // manipulada de qualquer forma depois que a página está de pé.
+    let cancelado = false;
+    let reverter: (() => void) | undefined;
 
-      const progresso = { t: 0 };
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: raizEl,
-          start: "top top",
-          end: "+=300%",
-          pin: alvo,
-          scrub: 1,
-          anticipatePin: 1,
-        },
-      });
+    void (async () => {
+      const { default: gsap } = await import("gsap");
+      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+      if (cancelado) return; // desmontou antes do chunk chegar: não monta nada
 
-      // Vídeo: 0 → último frame ao longo da timeline inteira (duração 10).
-      tl.to(
-        progresso,
-        {
-          t: DURACAO_LINHA,
-          duration: DURACAO_LINHA,
-          ease: "none",
-          onUpdate: () => {
-            if (!video || duracao === 0) return;
-            const alvo = (progresso.t / DURACAO_LINHA) * duracao;
-            if (Number.isFinite(alvo)) video.currentTime = alvo;
+      gsap.registerPlugin(ScrollTrigger);
+
+      const ctx = gsap.context(() => {
+        const [f0, f1, f2] = gsap.utils.toArray<HTMLElement>(".frase", raizEl);
+
+        const progresso = { t: 0 };
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: raizEl,
+            start: "top top",
+            end: "+=300%",
+            pin: alvo,
+            scrub: 1,
+            anticipatePin: 1,
           },
-        },
-        0,
-      );
+        });
 
-      // Frases: trocas fixas, sempre uma visível por vez.
-      if (f0 && f1) {
-        tl.to(f0, { opacity: 0, y: -28, duration: TRANSICAO, ease: "none" }, TROCA_UM);
-        tl.fromTo(
-          f1,
-          { opacity: 0, y: 28 },
-          { opacity: 1, y: 0, duration: TRANSICAO, ease: "none" },
-          TROCA_UM,
-        );
-      }
-      if (f1 && f2) {
+        // Vídeo: 0 → último frame ao longo da timeline inteira (duração 10).
         tl.to(
-          f1,
-          { opacity: 0, y: -28, duration: TRANSICAO, ease: "none" },
-          TROCA_DOIS,
+          progresso,
+          {
+            t: DURACAO_LINHA,
+            duration: DURACAO_LINHA,
+            ease: "none",
+            onUpdate: () => {
+              if (!video || duracao === 0) return;
+              const alvo = (progresso.t / DURACAO_LINHA) * duracao;
+              if (Number.isFinite(alvo)) video.currentTime = alvo;
+            },
+          },
+          0,
         );
-        tl.fromTo(
-          f2,
-          { opacity: 0, y: 28 },
-          { opacity: 1, y: 0, duration: TRANSICAO, ease: "none" },
-          TROCA_DOIS,
-        );
-      }
-    }, raizEl);
+
+        // Frases: trocas fixas, sempre uma visível por vez.
+        if (f0 && f1) {
+          tl.to(
+            f0,
+            { opacity: 0, y: -28, duration: TRANSICAO, ease: "none" },
+            TROCA_UM,
+          );
+          tl.fromTo(
+            f1,
+            { opacity: 0, y: 28 },
+            { opacity: 1, y: 0, duration: TRANSICAO, ease: "none" },
+            TROCA_UM,
+          );
+        }
+        if (f1 && f2) {
+          tl.to(
+            f1,
+            { opacity: 0, y: -28, duration: TRANSICAO, ease: "none" },
+            TROCA_DOIS,
+          );
+          tl.fromTo(
+            f2,
+            { opacity: 0, y: 28 },
+            { opacity: 1, y: 0, duration: TRANSICAO, ease: "none" },
+            TROCA_DOIS,
+          );
+        }
+      }, raizEl);
+
+      reverter = () => ctx.revert();
+    })();
 
     return () => {
+      cancelado = true;
       video?.removeEventListener("loadedmetadata", aoCarregarMetadados);
-      ctx.revert();
+      reverter?.();
     };
   }, []);
 

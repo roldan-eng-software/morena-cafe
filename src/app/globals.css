@@ -277,6 +277,26 @@
   opacity: 0.9;
 }
 
+/* ---------- Entradas das seções (Spec 04) ---------- */
+/* Estado inicial invisível e levemente deslocado. O IntersectionObserver do
+   componente aciona data-visivel="true" uma única vez e esta transição CSS
+   faz o resto: zero JS de animação no bundle das seções. */
+.entrada-el {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.entrada-el[data-visivel="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Sem JavaScript o estado inicial ficaria permanente: o <noscript> do layout
+   devolve a visibilidade com !important sobre estas regras. */
+
 /* ---------- Movimento reduzido (R3): nada anima em toda a página ---------- */
 @media (prefers-reduced-motion: reduce) {
   html {

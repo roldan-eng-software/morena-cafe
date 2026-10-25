@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Hero from "@/components/hero";
 import { frases } from "@/lib/conteudo";
@@ -28,13 +28,16 @@ describe("Spec 09 (1) — hero estática com movimento reduzido", () => {
 });
 
 describe("Spec 09 (2) — hero animada", () => {
-  it("monta o comportamento de rolagem e mantém as três frases na ordem", () => {
+  it("monta o comportamento de rolagem e mantém as três frases na ordem", async () => {
     definirMovimento(false);
     const { container } = render(<Hero />);
 
     const secao = container.querySelector("#hero");
     expect(secao).toHaveAttribute("data-estado", "animado");
-    expect(container.querySelector(".pin-spacer")).not.toBeNull();
+
+    // O GSAP chega por import() dinâmico (fora do bundle inicial): a fixação
+    // só existe depois que o chunk é avaliado.
+    await waitFor(() => expect(container.querySelector(".pin-spacer")).not.toBeNull());
 
     const frasesEl = Array.from(secao!.querySelectorAll<HTMLElement>(".frase"));
     expect(frasesEl).toHaveLength(3);
@@ -63,10 +66,10 @@ describe("Spec 09 (2) — hero animada", () => {
 });
 
 describe("Spec 09 (3) — montagem e desmontagem limpas", () => {
-  it("não deixa ScrollTrigger ou marca órfãos após desmontar", () => {
+  it("não deixa ScrollTrigger ou marca órfãos após desmontar", async () => {
     definirMovimento(false);
     const { unmount } = render(<Hero />);
-    expect(ScrollTrigger.getAll().length).toBeGreaterThan(0);
+    await waitFor(() => expect(ScrollTrigger.getAll().length).toBeGreaterThan(0));
 
     unmount();
 
